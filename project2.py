@@ -1,5 +1,6 @@
 import numpy as np 
 import copy
+import random
 
 #general issues: really, really slow on large datasets 
 #                small data 19 picks features [6, 9] with
@@ -24,6 +25,8 @@ def input_sequence():
 
     base_file_path = 'data/'
     data = np.loadtxt(base_file_path + raw_input_file)
+    #data = data[:, :5]
+    #print(data)
     num_of_features = data.shape[1] - 1
     num_of_instances = data.shape[0]
 
@@ -33,7 +36,7 @@ def input_sequence():
     for i in range(1, num_of_features + 1):
         feature_list.append(i)
 
-    accuracy = k_fold_cross_validation(data, feature_list, None)
+    accuracy = k_fold_cross_validation(data, feature_list, None, 0) #last parameter doesnt matter here
 
     print("Running nearest neighbor with all " + str(num_of_features) + " features, using \"leaving-one-out\" evaluation, I get an accuracy of " + str(accuracy))    
 
@@ -51,7 +54,7 @@ def forward_selection_search(data, num_of_features):
         local_best_accuracy = 0
         for curr_feature in range(1, num_of_features + 1): # features 1, 2, 3, ... 
             if curr_feature not in local_best_feature_set:
-                curr_accuracy = k_fold_cross_validation(data, local_best_feature_set, curr_feature) #? 
+                curr_accuracy = k_fold_cross_validation(data, local_best_feature_set, curr_feature, 0) 
                 temp = copy.deepcopy(local_best_feature_set)
                 temp.append(curr_feature)
                 temp.sort()
@@ -73,23 +76,69 @@ def forward_selection_search(data, num_of_features):
 
     print("Finished search!! The best feature subset is", global_best_feature_set, "which has an accuracy of", str(global_best_accuracy))
 
-#todo 
+#todo
 def backward_elimination_search(data, num_of_features, feature_list):
-    return 
+    local_best_feature_set = feature_list
+
+    global_best_feature_set = feature_list
+
+    print("Beginning Search.\n") 
+
+    # evaluate initial feature set 
+    global_best_accuracy = k_fold_cross_validation(data, local_best_feature_set, None, 0) #4th parameter doesnt matter
+    print("Using feature(s)", local_best_feature_set, "accuracy is", str(global_best_accuracy))
+    print("feature set", local_best_feature_set, "was best, accuracy is", str(global_best_accuracy))
+
+    for i in range(0, num_of_features): #for each feature... 
+        local_best_feature = None
+        local_best_accuracy = 0
+        for curr_feature in range(1, num_of_features + 1): # features 1, 2, 3, ... 
+            if curr_feature in local_best_feature_set:
+                curr_accuracy = k_fold_cross_validation(data, local_best_feature_set, curr_feature, 1) 
+                temp = copy.deepcopy(local_best_feature_set)
+                temp.remove(curr_feature)
+                temp.sort()
+                print("Using feature(s)", temp, "accuracy is", str(curr_accuracy))
+
+                if (curr_accuracy > local_best_accuracy):
+                    local_best_accuracy = curr_accuracy
+                    local_best_feature = curr_feature
+
+                if (curr_accuracy > global_best_accuracy):
+                    global_best_accuracy = curr_accuracy
+                    global_best_feature_set = temp
+                
+        local_best_feature_set.remove(local_best_feature)
+        local_best_feature_set.sort()
+
+        if (len(local_best_feature_set) == 1):
+            break
+
+        if (i != num_of_features - 1):
+            print("feature set", local_best_feature_set, "was best, accuracy is", str(local_best_accuracy))
+
+    print("Finished search!! The best feature subset is", global_best_feature_set, "which has an accuracy of", str(global_best_accuracy))
+
 
 # k fold cross validation with k = 1 using nearest neighbor 
-def k_fold_cross_validation(data, best_features, test_feature):
+# mode == 0, forwards selection, mode == 1, backwards elimination
+def k_fold_cross_validation(data, test_features, test_feature, mode):
     
     num_correct = 0
 
-    temp_best_features = copy.deepcopy(best_features)
-    if (test_feature != None):
-        temp_best_features.append(test_feature)
-    temp_best_features.insert(0, 0) 
-    temp_best_features.sort()
+    temp_test_features = copy.deepcopy(test_features)
+    if (test_feature != None): # just want to test features as is, no need to remove/add feature.
+        if (mode == 0):
+            temp_test_features.append(test_feature)
+        elif (mode == 1):
+            temp_test_features.remove(test_feature)
+        else:
+            return -1 # error
+    temp_test_features.insert(0, 0) 
+    temp_test_features.sort()
 
-    # makes a new dataset with only best_features + test_features 
-    new_data = data[:, temp_best_features]
+    # makes a new dataset with only test_features + test_feature
+    new_data = data[:, temp_test_features]
     
 
     for i in range(new_data.shape[0]):
@@ -109,6 +158,9 @@ def k_fold_cross_validation(data, best_features, test_feature):
 
     accuracy = num_correct / new_data.shape[0]
     return accuracy
+
+def k_fold_cross_validation_stub(data, best_features, test_feature):
+    return random.randint(0, 100)
     
 if __name__ == "__main__":
     main()
