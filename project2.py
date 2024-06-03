@@ -2,19 +2,26 @@ import numpy as np
 import copy
 import random
 
-#general issues: really, really slow on large datasets 
-#                small data 19 picks features [6, 9] with
-#                acc of 95% and not [6, 9, 11] with acc 0.946
+#general issues: 
+# small data 19 picks features [6, 9] with
+# acc of 95% and not [6, 9, 11] with acc 0.946
+
+# large data 6 picks features [1, 29] with acc
+#  of 0.978 and not [1, 4, 29] with acc 0.97 
+
+# both scenarios do give the same accuracies as given 
 
 def main():
     data, num_of_features, feature_list, input_mode = input_sequence()
-
+    
     if (input_mode == 1):
         forward_selection_search(data, num_of_features)
     elif (input_mode == 2):
-        backward_elimination_search(data, num_of_features, feature_list) #todo
+        backward_elimination_search(data, num_of_features, feature_list)
     else:
         print("Invalid input!")
+    
+    
 
 def input_sequence():
     print("Welcome to Jesus Martinez Vega's Feature Selection Algorithm.")
@@ -25,8 +32,6 @@ def input_sequence():
 
     base_file_path = 'data/'
     data = np.loadtxt(base_file_path + raw_input_file)
-    #data = data[:, :5]
-    #print(data)
     num_of_features = data.shape[1] - 1
     num_of_instances = data.shape[0]
 
@@ -36,9 +41,9 @@ def input_sequence():
     for i in range(1, num_of_features + 1):
         feature_list.append(i)
 
-    accuracy = k_fold_cross_validation(data, feature_list, None, 0) #last parameter doesnt matter here
+    accuracy = k_fold_cross_validation(data, feature_list, None, 0) 
 
-    print("Running nearest neighbor with all " + str(num_of_features) + " features, using \"leaving-one-out\" evaluation, I get an accuracy of " + str(accuracy))    
+    print("new: Running nearest neighbor with all " + str(num_of_features) + " features, using \"leaving-one-out\" evaluation, I get an accuracy of " + str(accuracy))       
 
     return data, num_of_features, feature_list, input_mode
 
@@ -139,28 +144,22 @@ def k_fold_cross_validation(data, test_features, test_feature, mode):
 
     # makes a new dataset with only test_features + test_feature
     new_data = data[:, temp_test_features]
-    
+    indicies = np.arange(new_data.shape[0])
 
     for i in range(new_data.shape[0]):
-        data_to_classify = new_data[i, 1:]
-        label_of_data = new_data[i, 0]
+        data_to_classify = new_data[i, 1:] 
+        label_of_data = new_data[i, 0]     
 
-        nn_distance = np.inf
-        for j in range(new_data.shape[0]):
-            if i != j:
-                distance = np.sqrt(np.sum((data_to_classify - new_data[j, 1:]) ** 2))
-                if (distance < nn_distance):
-                    nn_distance = distance
-                    nn_label = new_data[j, 0]
+        # a bit strange, the data point that is supposed to be removed is actually kept in 
+        # so the second nearest neighbor is taken
+        distances = np.linalg.norm(new_data[:, 1:] - data_to_classify, axis=1)
+        nearest_nneighbor_idx = distances.argsort()[1]
 
-        if label_of_data == nn_label:
+        if (label_of_data == new_data[nearest_nneighbor_idx, 0]):
             num_correct += 1
 
     accuracy = num_correct / new_data.shape[0]
     return accuracy
-
-def k_fold_cross_validation_stub(data, best_features, test_feature):
-    return random.randint(0, 100)
     
 if __name__ == "__main__":
     main()
