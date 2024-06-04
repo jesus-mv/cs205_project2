@@ -1,6 +1,5 @@
 import numpy as np 
 import copy
-import random
 
 #general issues: 
 # small data 19 picks features [6, 9] with
@@ -10,6 +9,9 @@ import random
 #  of 0.978 and not [1, 4, 29] with acc 0.97 
 
 # both scenarios do give the same accuracies as given 
+
+#CS205_small_Data__23.txt: features [2, 6] with accuracy of 0.954
+#CS205_large_Data__2.txt : features [1, 8] with accuracy of 0.9736
 
 def main():
     data, num_of_features, feature_list, input_mode = input_sequence()
@@ -21,8 +23,6 @@ def main():
     else:
         print("Invalid input!")
     
-    
-
 def input_sequence():
     print("Welcome to Jesus Martinez Vega's Feature Selection Algorithm.")
     raw_input_file = input("Type in the name of the file to test: ")
